@@ -353,7 +353,6 @@ class GlinerLLM(LLM):
 				self.gliner_model,
 				cache_dir=cache_path,
 				load_tokenizer=True,
-				trust_remote_code=True,
 			)
 
 			# 2. Save the model to the final destination. This saves 
@@ -368,7 +367,6 @@ class GlinerLLM(LLM):
 		# again.
 		model = GLiNER.from_pretrained(
 			model_path,
-			device=self.device,
 			local_files_only=True
 		)
 

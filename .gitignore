@@ -20,6 +20,7 @@ wheels/
 
 # Graphdb
 /examples/graph
+/examples/graph.wal
 
 # Vectordb
 **/vectors

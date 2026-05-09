@@ -115,9 +115,6 @@ class LightRAG:
 		# vector_preprocessing function from local-vectors).
 		assert len(chunked_text) == len(embeddings), \
 			"Expected number of embeddings generated to match the number of chunks generated for the text."
-		
-		print(json.dumps(chunked_text, indent=4))
-		print(json.dumps(embeddings, indent=4))
 
 		# Error checking in case the user hasn't initialized the 
 		# desired table yet.
@@ -138,15 +135,15 @@ class LightRAG:
 			})
 
 			# 2. Extract and index graph elements.'
-			entities, relationships = self.llm.extract_knowledge_graph(text)
+			entities, relationships = self.llm.extract_knowledge_graph(subtext)
 			for entity in entities:
-				ent_name = entity.lower()
+				ent_name = entity["text"].lower()
 				ent_emb = self.embedder.embed_text(
 					ent_name,
 					truncate=True,
 					to_binary=self.use_binary,
 					vectors_only=True,
-				)
+				)[0]
 
 				# Embed entity for vector search.
 				vector_entries.append({
@@ -157,7 +154,9 @@ class LightRAG:
 				})
 
 				# Store in graph.
-				self.graphdb.add_entity(ent_name, entity)
+				self.graphdb.add_entity(
+					ent_name, entity["text"], entity["label"]
+				)
 
 			for relation in relationships:
 				# Summarize the relationship for high level indexing.
@@ -167,7 +166,9 @@ class LightRAG:
 					truncate=True,
 					to_binary=self.use_binary,
 					vectors_only=True,
-				)
+				)[0]
+
+				# Embed summary for vector search.
 				vector_entries.append({
 					"id": f"relationship_{uuid.uuid4().hex[:8]}",
 					"vector": summary_emb["vector_binary"] if self.use_binary else summary_emb["vector_full"],
@@ -176,7 +177,12 @@ class LightRAG:
 				})
 
 				# Store in graph.
-				self.graphdb.add_triplet()
+				self.graphdb.add_triplet(
+					source=relation["src"], 
+					target=relation["tgt"],
+					relationship=relation["rel"],
+					summary=relation["desc"],
+				)
 
 		# Write the vector data to the table.
 		self.vectordb.update_table(
@@ -220,7 +226,7 @@ class LightRAG:
 		expanded_context = []
 		for result in results:
 			if result["type"] == "entity":
-				entity_id = results['id'].replace("entity_", "")
+				entity_id = result['id'].replace("entity_", "")
 				graph_results = self.graphdb.query(entity_id)
 				while graph_results.has_next():
 					neighbor = graph_results.get_next()
