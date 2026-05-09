@@ -1,5 +1,5 @@
 {
-    "graphrag": {
+    "lightrag": {
         "vector": {
             "token_overlap": 128,
             "batch_size": 16,

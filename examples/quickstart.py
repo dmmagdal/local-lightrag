@@ -43,10 +43,10 @@ def main():
 
 	# Load the configuration information.
 	with open("config.json", "r") as f:
-		config = json.load(f)['graphrag']
+		config = json.load(f)['lightrag']
 
 	# Unpack and organized theh configuration data for each component 
-	# of the graphrag.
+	# of the lightrag.
 	vector_config = config["vector"]
 	graph_config = config["graph"]
 	llm_config = config["llm"]
@@ -68,8 +68,8 @@ def main():
 	# Detect GPU accelerators.
 	device = detect_device(force_cpu=True)
 
-	# Initialize graphrag with the configuration.
-	graphrag = LightRAG(
+	# Initialize lightrag with the configuration.
+	lightrag = LightRAG(
 		embed_model_id=vector_config["model_id"],
 		vector_db_path=vector_config["vector_db"],
 		graph_db_path=graph_config["graph_db"],
@@ -87,41 +87,41 @@ def main():
 	)
 
 	# Define schema (this is heavily dependent upon the datasets) and
-	# pass that to the graphrag so that the vectordb can build the 
+	# pass that to the lightrag so that the vectordb can build the 
 	# table.
 	schema = pa.schema([
 		pa.field("id", pa.string()),
 		pa.field("text", pa.string()),
 		pa.field("vector", pa.list_(
 			pa.uint8() if vector_config["use_binary"] else pa.float32(), 
-			graphrag.get_dims()
+			lightrag.get_dims()
 		)),
 		pa.field("type", pa.string())
 	])
-	graphrag.build_vector_table(
+	lightrag.build_vector_table(
 		table_name=vector_config["table_name"],
 		schema=schema
 	)
 
-	# Ingest and index the documents to the graphrag.
+	# Ingest and index the documents to the lightrag.
 	for split_name, data in documents.items():
 		for doc in tqdm(data, desc=f"Ingesting {split_name} split into Graph RAG"):
-			graphrag.ingest(
+			lightrag.ingest(
 				text=doc["chunk"], 
 				doc_id=doc["chunk_id"],
 				table_name=vector_config["table_name"]
 			)
 
-	# Perform a query on the graphrag.
+	# Perform a query on the lightrag.
 	sampled_queries = queries.shuffle(seed=SEED).select(range(5))
 	for query in sampled_queries:
 		question, chunk_id, answer = query["og_query"], query["chunk_id"], query["answer"]
-		graphrag_answer = graphrag.query(question)
+		lightrag_answer = lightrag.query(question)
 
 		# Output results.
 		print(f"Question: {question}")
 		print(f"Expected answer: {answer} (chunk id {chunk_id})")
-		print(f"Generated answer: {graphrag_answer}")
+		print(f"Generated answer: {lightrag_answer}")
 		print("-" * 72)
 
 	# Clear all tables or databases since we're done.
