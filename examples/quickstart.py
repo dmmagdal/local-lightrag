@@ -55,7 +55,8 @@ def main():
 	storage_artifacts = [
 		vector_config["vector_db"],
 		graph_config["graph_db"],
-		"./graph"
+		"./graph",
+		"graph.wal",
 	]
 	for artifact in storage_artifacts:
 		if os.path.exists(artifact):

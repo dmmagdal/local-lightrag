@@ -123,8 +123,9 @@ class LightRAG:
 		
 		# Iterate through the data.
 		vector_entries = []
-		for idx, (subtext, emb) in enumerate(zip(chunked_text, embeddings)):
+		for idx, (chunk, emb) in enumerate(zip(chunked_text, embeddings)):
 			chunk_id = f"{doc_id}_chunk_{idx}"
+			subtext = text[chunk["text_idx"]: chunk["text_idx"] + chunk["text_len"]]
 
 			# 1. Index the chunk.
 			vector_entries.append({
@@ -235,13 +236,13 @@ class LightRAG:
 					)
 
 		# 3. Response synthesis.
-		final_context = "\n".join(
-            "### RELEVANT TEXT ###", *chunk_context[:3],
-            "### KEY RELATIONSHIPS ###", *graph_context[:5],
-            "### GRAPH STRUCTURE ###", *expanded_context[:5]
-		)
+		final_context = "\n".join([
+			"### RELEVANT TEXT ###", *chunk_context[:3],
+			"### KEY RELATIONSHIPS ###", *graph_context[:5],
+			"### GRAPH STRUCTURE ###", *expanded_context[:5]
+		])
 		prompt = f"""Given the following multi-level context, answer the question.
-		QUERY: {self.query}
+		QUERY: {query}
 		CONTEXT:
 		{final_context}
 		ANSWER:
