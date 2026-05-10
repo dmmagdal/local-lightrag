@@ -75,3 +75,12 @@
          - Triplets capture relationships: yes
          - Generates multiple triplets for text: yes
          - Generations are repeatable: yes
+ - Spacy models
+     - Be sure to download spacy models before running the `quickstart.py` script.
+         - `python -m spacy download en_core_web_sm`
+     - Models available:
+         - en_core_web_sm
+         - en_core_web_md
+         - en_core_web_lg
+         - en_core_web_trf
+     - [Documentation](https://spacy.io/models) on spacy models.
